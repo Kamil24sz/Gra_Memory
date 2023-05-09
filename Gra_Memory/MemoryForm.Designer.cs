@@ -100,14 +100,17 @@
             // timerZakrywacz
             // 
             this.timerZakrywacz.Interval = 1000;
+            this.timerZakrywacz.Tick += new System.EventHandler(this.timerZakrywacz_Tick);
             // 
             // timerCzasGry
             // 
             this.timerCzasGry.Interval = 1000;
+            this.timerCzasGry.Tick += new System.EventHandler(this.timerCzasGry_Tick);
             // 
             // timerCzasPodgladu
             // 
             this.timerCzasPodgladu.Interval = 1000;
+            this.timerCzasPodgladu.Tick += new System.EventHandler(this.timerCzasPodgladu_Tick);
             // 
             // MemoryForm
             // 

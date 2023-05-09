@@ -16,6 +16,10 @@ namespace Gra_Memory
         //deklarujemy obiekt ustawień gry
         private GameSettings _settings;
 
+        // zmienne pomocnicze na odkrywane karty
+        MemoryCard _pierwsza = null;
+        MemoryCard _druga = null;
+        
         public MemoryForm()
         {
             InitializeComponent();
@@ -24,6 +28,8 @@ namespace Gra_Memory
 
             UstawKontrolki();
             GenerujKarty();
+
+            timerCzasPodgladu.Start();
         }
 
         //tutaj zaczynamy pisać kod
@@ -114,6 +120,8 @@ namespace Gra_Memory
                     b.Height = _settings.Bok;
                     b.Width = _settings.Bok;
 
+                    b.Click += BtnClicked;
+
                     //odkrywamy startowo kartę
                     b.Odkryj();
 
@@ -127,5 +135,130 @@ namespace Gra_Memory
             }
 
         }
+
+        private void timerZakrywacz_Tick(object sender, EventArgs e)
+        {
+            //zakrywamy obie karty
+            _pierwsza.Zakryj();
+            _druga.Zakryj();
+
+            //czyścimy nasze zmienne tymaczasowe
+            _pierwsza = null;
+            _druga = null;
+
+            //aktywywujemy ponownie panel gry
+            panelKart.Enabled = true;
+
+            //zatrzymujemy timer
+            timerZakrywacz.Stop();
+        }
+
+        private void timerCzasPodgladu_Tick(object sender, EventArgs e)
+        {
+            //zmienijszamy czas podglądu o 1
+            _settings.CzasPodgladu--;
+
+            //aktulizacja labela
+            lblStartInfo.Text = $"Początek gry za {_settings.CzasPodgladu}.";
+
+            if(_settings.CzasPodgladu <= 0)
+            {
+                // wyłączenie widoczności labelka Początek gry za...
+                lblStartInfo.Visible = false ;
+
+                //pętla przechodzi po wszystkich kontrolkach w panelu kart
+                foreach (Control kontrolka in panelKart.Controls) 
+                {
+                    //rzutowanie z kontrolki na memorycard
+                    MemoryCard card = (MemoryCard)kontrolka;
+
+                    //zakrywa karty
+                    card.Zakryj();
+                }
+
+                //zatrzymuję timer
+                timerCzasPodgladu.Stop();
+
+                //uruchomienie timera czas gry
+                timerCzasGry.Start();
+            }
+
+        }
+
+        private void timerCzasGry_Tick(object sender, EventArgs e)
+        {
+            //zmniejszamy o 1 czas gry
+            _settings.CzasGry--;
+
+            //aktualizacja labela
+            lblCzasWartosc.Text = _settings.CzasGry.ToString();
+
+            //sprawdzamy czy gra sie nie skończyła
+            if(_settings.CzasGry <= 0 || _settings.AktualnePunkty == _settings.MaxPunkty)
+            {
+                timerCzasGry.Stop();
+                timerZakrywacz.Stop();
+
+                DialogResult yesNo = MessageBox.Show($"Zdobyty punkty {_settings.AktualnePunkty}. Grasz ponownie?","Koniec gry", MessageBoxButtons.YesNo);
+
+                if(yesNo == DialogResult.Yes) 
+                {   
+                    //restart gry
+                    _settings.UstawStartowe();
+
+                    //czyśmy panel, generujmy karty od nowa
+                    GenerujKarty();
+                    UstawKontrolki();
+
+                    //restartujemy zmienne pomocnicze i odmrażamy panel
+                    panelKart.Enabled = true;
+                    _pierwsza = null;
+                    _druga = null;
+                }
+                else
+                {
+                    //Zamyka program
+                    Application.Exit();
+                }
+            }
+        }
+        private void BtnClicked (object sender, EventArgs e)
+        {
+            MemoryCard btn = (MemoryCard)sender;
+
+            if(_pierwsza == null)
+            {
+                _pierwsza = btn;
+
+                _pierwsza.Odkryj();
+            }
+            else
+            {
+                _druga = btn;
+
+                _druga.Odkryj();
+
+                panelKart.Enabled = false;
+
+                if(_pierwsza.Id == _druga.Id)
+                {
+                    _settings.AktualnePunkty++;
+
+                    lblPunktyWartosc.Text = _settings.AktualnePunkty.ToString();
+
+                    _pierwsza = null;
+                    _druga = null;
+
+                    panelKart.Enabled = true;
+                }
+                else
+                {
+                    timerZakrywacz.Start();
+                }
+            }
+
+
+        }
+
     }
 }
